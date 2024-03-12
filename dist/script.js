@@ -13848,6 +13848,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _modules_modals__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./modules/modals */ "./src/js/modules/modals.js");
 /* harmony import */ var _modules_tabs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./modules/tabs */ "./src/js/modules/tabs.js");
 /* harmony import */ var _modules_forms__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./modules/forms */ "./src/js/modules/forms.js");
+/* harmony import */ var _modules_changeModalState__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./modules/changeModalState */ "./src/js/modules/changeModalState.js");
+
 
 
 
@@ -13855,12 +13857,87 @@ __webpack_require__.r(__webpack_exports__);
 window.addEventListener("DOMContentLoaded", () => {
   "use strict";
 
+  let modalState = {};
+  Object(_modules_changeModalState__WEBPACK_IMPORTED_MODULE_4__["default"])(modalState);
   Object(_modules_modals__WEBPACK_IMPORTED_MODULE_1__["default"])();
   Object(_modules_tabs__WEBPACK_IMPORTED_MODULE_2__["default"])(".glazing_slider", ".glazing_block", ".glazing_content", "active");
   Object(_modules_tabs__WEBPACK_IMPORTED_MODULE_2__["default"])(".decoration_slider", ".no_click", ".decoration_content > div > div", "after_click");
   Object(_modules_tabs__WEBPACK_IMPORTED_MODULE_2__["default"])(".balcon_icons", ".balcon_icons_img", ".big_img > img", "do_image_more", "inline-block");
-  Object(_modules_forms__WEBPACK_IMPORTED_MODULE_3__["default"])();
+  Object(_modules_forms__WEBPACK_IMPORTED_MODULE_3__["default"])(modalState);
 });
+
+/***/ }),
+
+/***/ "./src/js/modules/changeModalState.js":
+/*!********************************************!*\
+  !*** ./src/js/modules/changeModalState.js ***!
+  \********************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _checkNumberInputs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./checkNumberInputs */ "./src/js/modules/checkNumberInputs.js");
+
+const changeModalState = state => {
+  const windowForm = document.querySelectorAll(".balcon_icons_img"),
+    windowWidth = document.querySelectorAll("#width"),
+    windowHeight = document.querySelectorAll("#height"),
+    windowType = document.querySelectorAll("#view_type"),
+    windowProfile = document.querySelectorAll(".checkbox");
+  Object(_checkNumberInputs__WEBPACK_IMPORTED_MODULE_0__["default"])("#width");
+  Object(_checkNumberInputs__WEBPACK_IMPORTED_MODULE_0__["default"])("#height");
+  state.form = 0;
+  state.type = "tree";
+  function bindActionToElements(event, element, prop) {
+    element.forEach((item, index) => {
+      item.addEventListener(event, () => {
+        switch (item.nodeName) {
+          case "SPAN":
+            state[prop] = index;
+            break;
+          case "INPUT":
+            if (item.getAttribute("type") === "checkbox") {
+              index === 0 ? state[prop] = "cold" : state[prop] = "warm";
+              element.forEach((box, i) => index === i ? box.checked = true : box.checked = false);
+            } else state[prop] = item.value;
+            break;
+          case "SELECT":
+            state[prop] = item.value;
+            break;
+        }
+        console.log(state);
+      });
+    });
+  }
+  bindActionToElements("click", windowForm, "form");
+  bindActionToElements("input", windowHeight, "height");
+  bindActionToElements("input", windowWidth, "width");
+  bindActionToElements("change", windowType, "type");
+  bindActionToElements("change", windowProfile, "profile");
+};
+/* harmony default export */ __webpack_exports__["default"] = (changeModalState);
+
+/***/ }),
+
+/***/ "./src/js/modules/checkNumberInputs.js":
+/*!*********************************************!*\
+  !*** ./src/js/modules/checkNumberInputs.js ***!
+  \*********************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+const checkNumberInputs = selector => {
+  const numberInputs = document.querySelectorAll(selector);
+  numberInputs.forEach(item => {
+    item.addEventListener("input", () => {
+      item.value = item.value.replace(/\D/, "");
+    });
+  });
+};
+/* harmony default export */ __webpack_exports__["default"] = (checkNumberInputs);
 
 /***/ }),
 
@@ -13873,13 +13950,12 @@ window.addEventListener("DOMContentLoaded", () => {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-const forms = () => {
+/* harmony import */ var _checkNumberInputs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./checkNumberInputs */ "./src/js/modules/checkNumberInputs.js");
+
+const forms = state => {
   const form = document.querySelectorAll("form"),
-    inputs = document.querySelectorAll("input"),
-    phoneInputs = document.querySelectorAll("input[name='user_phone']");
-  phoneInputs.forEach(item => {
-    item.addEventListener("input", () => {});
-  });
+    inputs = document.querySelectorAll("input");
+  Object(_checkNumberInputs__WEBPACK_IMPORTED_MODULE_0__["default"])("input[name='user_phone']");
   const message = {
     loading: "Загрузка...",
     success: "Спасибо! Скоро мы с Вами свяжемся",
@@ -13903,12 +13979,19 @@ const forms = () => {
       statusMessage.classList.add("status");
       item.appendChild(statusMessage);
       const formData = new FormData(item);
+      if (item.getAttribute("data-calc") === "end") {
+        for (const key in state) {
+          formData.append(key, state[key]);
+        }
+      }
       postData("assets/server.php", formData).then(result => {
         console.log(result);
         statusMessage.textContent = message.success;
       }).catch(() => statusMessage.textContent = message.failure).finally(() => {
         clearInputs();
-        setTimeout(() => statusMessage.remove(), 10000);
+        setTimeout(() => {
+          statusMessage.remove();
+        }, 10000);
       });
     });
   });
